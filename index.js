@@ -1,75 +1,31 @@
+/* eslint-disable consistent-return */
 
-const { Client } = require('pg');
-const TABLE_DINNERS = 'dinners', 
-      TABLE_TOURNEYS = 'tourneys';
+const express = require('express');
+const routes = require('./routes');
+const db = require('./db');
 
+const app = express();
+const port = 3000;
 
-const client = new Client({
-    user: 'sandbox',
-    password: 'sandbox',
-    database: 'birthdays',
-  });
+console.log('starting');
 
-showAll(TABLE_DINNERS);
-//addDinner('Antosha', '1992-07-22', 'milk', 'cheese', 'apple');
-//updateMaxPoints('Gladys', 450);
-//deleteDinnerByFriend('Antosha');
+app.get('/', (request, responce) => {
+  responce.send('Hello Ex[press :)');
+});
 
-function showAll(table)
-{
-    console.log(`--------TABLE--${table}------`);    
-    doQuery(`SELECT * FROM ${table};`);
-}
-
-function addDinner(nameVal, birthdateVal, entreeVal, sideVal, dessertVal)
-{
-    console.log(`--------ADD DINNER------`);   
-
-    const query = {
-        text: `INSERT INTO dinners (
-            name, birthdate, entree, side, dessert
-            ) VALUES ($1, $2, $3, $4, $5) RETURNING *;`,
-        values: [nameVal, birthdateVal, entreeVal, sideVal, dessertVal],
+app.get('/dinners', (req, res, next) => {
+  console.log('get');
+  db.query(`SELECT * FROM dinners;`, [], (err, result) => {
+    console.log(err ? err.stack : result.rows);
+    if (err) {
+      return next(err);
     }
+    res.send(result.rows);
+  });
+});
 
-    doQuery(query);
-}
+//app.use('/', routes());
 
-function updateMaxPoints(name, newValue)
-{
-    console.log(`--------UPDATE ------`);  
-    
-    const query = {
-        text: `UPDATE tourneys 
-            SET best = $2
-            WHERE name = $1;`,
-        values: [name, newValue,],
-    } 
-    doQuery(query);
-}
-
-function deleteDinnerByFriend(friendName)
-{    
-    console.log(`--------DELETE ------`);  
-    
-    const query = {
-        text: `DELETE FROM dinners 
-            WHERE name = $1;`,
-        values: [friendName],
-    } 
-
-    doQuery(query);
-}
-
-function doQuery(query)
-{
-    client.connect();
-    client.query(query, (err, res) => {
-        console.log('result:');
-        console.log(err ? err.stack : res.rows); 
-
-        client.end();
-    });
-}
-
-
+const server = app.listen(port, () => {
+  console.log(`Express server listening on port ${port}`);
+});
